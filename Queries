@@ -1,0 +1,103 @@
+1.Search the need information by name in Tripadvisor table(you should Replace the $RestaurantName with the name you want to search)
+SELECT `Name`, `City`, `State`, `Country`, `Address`, `Total Review`, `dataset` FROM `Tripadvisor` WHERE `Name` LIKE '%$RestaurantName%' LIMIT 0 , 30
+
+2.Search the need information by name in zomato table(you should Replace the $RestaurantName with the name you want to search)
+SELECT `Restaurant Name`, `City`,`Country Code`,`Address`,`Aggregate rating`, `dataset`FROM `zomato` WHERE `Restaurant Name` Like '%$RestaurantName%' LIMIT 0 , 30
+
+3.Search the need information by name in yelp_business table(you should Replace the $RestaurantName with the name you want to search)
+SELECT `store_name`, `store_city`, `store_state`, `store_address`, `store_stars`, `dataset` FROM `yelp_business` WHERE `store_name` LIKE '%$RestaurantName%' LIMIT 0 , 30
+
+4.Search the id of each table by name in nameindex table(you should Replace the $RestaurantName with the name you want to search)
+SELECT `tripid`,`zomatoid`, `yelpid` FROM `nameindex` WHERE `name` LIKE '%$RestaurantName%'
+
+5.Search the need information by Restaurant ID in Tripadvisor table(you should Replace the $name with the Restaurant ID you want to search)
+SELECT `Name`, `City`, `State`, `Country`, `Address`, `Total Review`, `dataset` FROM `Tripadvisor` WHERE `Restaurant ID` = $name
+
+6.Search the need information by name in zomato table(you should Replace the $name with the Restaurant ID you want to search)
+SELECT `Restaurant Name`, `City`,`Country Code`,`Address`,`Aggregate rating`, `dataset` FROM `zomato` WHERE `Restaurant ID` = $name
+
+7.Search the need information by name in yelp_business table(you should Replace the $name with the Restaurant ID you want to search)
+SELECT `store_name`, `store_city`, `store_state`, `store_address`, `store_stars`, `dataset` FROM `yelp_business` WHERE `Restaurant ID` = $name
+
+Following queries are used to build the nameindex table with the same restaurant in tables(you may not use them in the cs540_hezhi database, as the nameindex table already exists):
+
+8.Create the nameindex table
+CREATE TABLE IF NOT EXISTS `nameindex` (
+  `id` int(7) NOT NULL AUTO_INCREMENT,
+  `name` varchar(75) CHARACTER SET utf8 NOT NULL,
+  `tripid` int(5) DEFAULT NULL,
+  `zomatoid` int(4) DEFAULT NULL,
+  `yelpid` int(7) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=15 ;
+
+9.Insert the same restaurant id in three tables(this one not work on the cs540_hezhi phpmyadmin but it works on my database):
+INSERT INTO `nameindex`(`name`, `tripid`, `zomatoid`, `yelpid`)
+SELECT
+    `Tripadvisor`.`Name`,
+    `Tripadvisor`.`Restaurant ID`, 
+    `zomato`.`Restaurant ID`,
+    `yelp_business`.`Restaurant ID`
+FROM
+    `Tripadvisor`,
+    `zomato`,
+    `yelp_business`
+WHERE
+    (
+        `Tripadvisor`.`Latitude` - `zomato`.`Latitude` > -0.01 AND `Tripadvisor`.`Latitude` - `zomato`.`Latitude` < 0.01
+    ) AND(
+        `Tripadvisor`.`Longitude` - `zomato`.`Longitude` > -0.01 AND `Tripadvisor`.`Longitude` - `zomato`.`Longitude` < 0.01
+    ) AND (
+         `Tripadvisor`.`Name` = `zomato`.`Restaurant Name`
+    ) AND(
+         `Tripadvisor`.`Latitude` <> 0 OR `zomato`.`Latitude` <> 0 OR `Tripadvisor`.`Longitude` <>0 OR `zomato`.`Longitude`<>0
+    ) AND(
+        `yelp_business`.`store_latitude` - `zomato`.`Latitude` > -0.01 AND `yelp_business`.`store_latitude` - `zomato`.`Latitude` < 0.01
+    ) AND(
+        `yelp_business`.`store_longitude` - `zomato`.`Longitude` > -0.01 AND `yelp_business`.`store_longitude` - `zomato`.`Longitude` < 0.01
+    ) AND (
+         `yelp_business`.`store_name` = `zomato`.`Restaurant Name`
+    ) AND(
+         `yelp_business`.`store_latitude` <> 0 OR `zomato`.`Latitude` <> 0 OR `yelp_business`.`store_longitude` <>0 OR `zomato`.`Longitude`<>0
+    )
+
+10.Insert the same restaurant id in Tripadvisor and zomato:  
+INSERT INTO `nameindex`(`name`, `tripid`, `zomatoid`)
+SELECT
+    `Tripadvisor`.`Name`,
+    `Tripadvisor`.`Restaurant ID`, 
+    `zomato`.`Restaurant ID`
+FROM
+    `Tripadvisor`,
+    `zomato`
+WHERE
+    (
+        `Tripadvisor`.`Latitude` - `zomato`.`Latitude` > -0.01 AND `Tripadvisor`.`Latitude` - `zomato`.`Latitude` < 0.01
+    ) AND(
+        `Tripadvisor`.`Longitude` - `zomato`.`Longitude` > -0.01 AND `Tripadvisor`.`Longitude` - `zomato`.`Longitude` < 0.01
+    ) AND (
+         `Tripadvisor`.`Name` = `zomato`.`Restaurant Name`
+    ) AND(
+         `Tripadvisor`.`Latitude` <> 0 OR `zomato`.`Latitude` <> 0 OR `Tripadvisor`.`Longitude` <>0 OR `zomato`.`Longitude`<>0
+    )
+
+11.Insert the same restaurant id in zomato and yelp_business:
+INSERT INTO `nameindex`(`name`, `zomatoid`, `yelpid`)
+SELECT
+    `yelp_business`.`store_name`,
+    `zomato`.`Restaurant ID`,
+    `yelp_business`.`Restaurant ID`
+FROM
+    `zomato`,
+    `yelp_business`
+WHERE
+    (
+        `yelp_business`.`store_latitude` - `zomato`.`Latitude` > -0.01 AND `yelp_business`.`store_latitude` - `zomato`.`Latitude` < 0.01
+    ) AND(
+        `yelp_business`.`store_longitude` - `zomato`.`Longitude` > -0.01 AND `yelp_business`.`store_longitude` - `zomato`.`Longitude` < 0.01
+    ) AND (
+         `yelp_business`.`store_name` = `zomato`.`Restaurant Name`
+    ) AND(
+         `yelp_business`.`store_latitude` <> 0 OR `zomato`.`Latitude` <> 0 OR `yelp_business`.`store_longitude` <>0 OR `zomato`.`Longitude`<>0
+    )
+
